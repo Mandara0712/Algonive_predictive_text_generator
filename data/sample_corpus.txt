@@ -1,0 +1,4 @@
+I love programming in python. I love building projects in python.
+Python is great for data science and web development. I love coding every day.
+Learning python and working on real projects improves my skills.
+This project is a predictive text generator using n gram language model.

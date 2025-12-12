@@ -1,0 +1,26 @@
+Short Report - Predictive Text Generator (N-gram)
+
+Objective:
+Implement a next-word suggestion system using n-gram language modeling and a simple Flask UI for demo.
+
+Dataset:
+sample_corpus.txt (replace with larger corpus for better accuracy).
+
+Approach:
+- Preprocess text (lowercase, clean).
+- Build unigram, bigram, trigram counts.
+- Prediction uses backoff: trigram -> bigram -> unigram.
+
+Evaluation:
+- Manual qualitative testing on multiple phrases.
+- For larger corpus: split corpus into train/test and compute top-k accuracy.
+
+Deliverables:
+- Source code (src/)
+- Model file (model/ngrams.pkl) created after running build_model.py
+- README and short demo video
+
+Future work:
+- Add smoothing & probabilities.
+- Add spell-correction and personalization.
+- Replace n-gram with small NN (LSTM) if resources allow.

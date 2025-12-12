@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Predictive Text Generator</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    // Debounce helper
+    function debounce(fn, delay=300){
+      let t;
+      return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), delay); };
+    }
+
+    async function fetchSuggestions(text, k=6){
+      if(!text || !text.trim()){
+        renderSuggestions([]);
+        return;
+      }
+      try{
+        document.getElementById('loader').style.display = 'inline-block';
+        const resp = await fetch('/api/predict', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text, k})
+        });
+        const data = await resp.json();
+        renderSuggestions(data.suggestions || [], data.error);
+      }catch(e){
+        renderSuggestions([], 'Error fetching suggestions');
+      }finally{ document.getElementById('loader').style.display = 'none'; }
+    }
+
+    const debouncedFetch = debounce((v)=>fetchSuggestions(v, 6), 250);
+
+    function renderSuggestions(list, error){
+      const out = document.getElementById('suggestions');
+      out.innerHTML = '';
+      if(error){ out.innerHTML = `<div class="error">${error}</div>`; return; }
+      if(!list || list.length===0){ out.innerHTML = '<div class="hint">No suggestions yet — type more words.</div>'; return; }
+      list.forEach(s=>{
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'chip'; btn.textContent = s;
+        btn.onclick = ()=>insertWord(s);
+        out.appendChild(btn);
+      });
+    }
+
+    function insertWord(w){
+      const input = document.getElementById('inputText');
+      const needSpace = input.value && !input.value.endsWith(' ');
+      input.value = input.value + (needSpace ? ' ' : '') + w + ' ';
+      input.focus();
+      debouncedFetch(input.value);
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const ta = document.getElementById('inputText');
+      ta.addEventListener('input', (e)=>debouncedFetch(e.target.value));
+      // initial hint
+      renderSuggestions([]);
+    });
+  </script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero-inner">
+        <h1>Predictive Text Generator</h1>
+        <p class="tag">Smart suggestions from a simple n-gram model.</p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="card">
+        <label for="inputText" class="label">Start typing</label>
+        <div class="input-row">
+          <textarea id="inputText" name="text" rows="4" placeholder="Type a sentence like 'I love'..."></textarea>
+          <div id="loader" class="loader" aria-hidden="true" title="Loading" style="display:none"></div>
+        </div>
+
+        <div class="suggestions-area">
+          <div class="suggestions-header">Suggestions</div>
+          <div id="suggestions" class="suggestions"></div>
+        </div>
+
+        <div class="tips-inline">
+          <div class="tips-inline-header">Tips</div>
+          <ul class="tips-inline-list">
+            <li>Click a suggestion to append it to your text.</li>
+            <li>Longer input (multi-word context) yields better trigram suggestions.</li>
+          </ul>
+        </div>
+
+        <!-- Tips removed as requested -->
+
+        <p class="muted">Model: trigram → bigram → unigram backoff. Put your corpus in <code>data/sample_corpus.txt</code> and run <code>python src/build_model.py</code>.</p>
+      </section>
+
+      <!-- Right-side Tips card removed -->
+    </main>
+
+    <footer class="foot">Built with a lightweight n-gram model • <a href="https://github.com" target="_blank">Source</a></footer>
+  </div>
+</body>
+</html>
